@@ -2,7 +2,7 @@
 
 Proyecto de análisis de datos de suscriptores de plataforma de streaming
 
-## Integrantes
+## 👥 Integrantes
 *Vega Orellana Ignacio Rodolfo
 *Romano Arnoux Bruno Leonel
 ## Estructura del repositorio
