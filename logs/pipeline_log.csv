@@ -1,0 +1,9 @@
+Paso,Descripción,Filas,Nulos,Retención (%)
+01,Dataset original cargado,8160,753,100.0
+02,Eliminación de duplicados por user_id (keep=first),8000,753,44.44
+03,Estandarización y limpieza de fechas,7601,418,42.23
+04,filtrar los minutos de visualización al mes (0-5000 minutos),7342,227,40.79
+05,Reemplazar nulos en favorite_genre y estandarizar géneros con mapeo,7342,0,40.79
+06,Filtrar edades (4-95 años),7251,0,40.28
+07,Estandarizar países (mapeo completo),7251,0,40.28
+08,Estandarización de subscription_plan a (Básico/Estándar/Premium),7251,0,40.28
