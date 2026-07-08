@@ -44,7 +44,7 @@ st.markdown("## Resumen del dataset")
 col1, col2, col3 = st.columns(3)
 col1.metric("Registros originales", "8,160")
 col2.metric("Registros después de limpieza", "7,251")
-col3.metric("Registros eliminados", "818")
+col3.metric("Registros eliminados", "909")
 
 st.caption("Se eliminaron registros con valores imposibles, fechas futuras, edades fuera de rango (4-95 años) y se imputaron valores nulos de manera justificada.")
 
