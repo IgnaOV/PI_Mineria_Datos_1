@@ -99,11 +99,13 @@ if raw_ok:
 
     st.info("""
     **Interpretación:**
-    - 8,160 filas, 8 columnas.
-    - En columnas `monthly_watch_time_mins` (15), `favorite_genre` (22) y `last_login_date` (25) hay presencia de datos nulos, sumando un total de 62.
-    - La columna `last_login_date` tiene un tipo de dato erróneo (está en object, debe ser date).
-    - Valor mínimo de `age` y `monthly_watch_time_mins` son negativos, cuando no es posible.
-    - Valor máximo de `age` y `monthly_watch_time_mins` tienen valores imposibles.
+    - 8.160 filas, 8 columnas.
+    - En columnas `monthly_watch_time_mins` (193), `favorite_genre` (240) y `last_login_date` (320) hay presencia de datos nulos, sumando un total de 753.
+    - La columna `last_login_date` tiene un tipo de dato erróneo (está en object, debe ser date), además de tres formatos mezclados (YYYY-MM-DD, MM-DD-YYYY, YYYY/MM/DD).
+    - 160 registros duplicados por `user_id`.
+    - Valor mínimo de `age` es -5 y valor máximo es 150, ambos imposibles.
+    - Valor mínimo de `monthly_watch_time_mins` es -120.0 y valor máximo es 99.999.0, ambos imposibles.
+    - Variantes inconsistentes en categóricas: `country` (24 valores únicos), `subscription_plan` (13 valores únicos).
     - Análisis de medidas se realizan luego del procesamiento y limpieza de la base de datos.
     """)
 else:
@@ -113,106 +115,79 @@ else:
 st.markdown("---")
 st.markdown("## 3. Pipeline de limpieza")
 
-with st.expander("📌 1. Estandarización de fechas (last_login_date)"):
+with st.expander("📌 1. Eliminación de duplicados (user_id)"):
     st.markdown("""
-    La columna `last_login_date` presentaba múltiples formatos mezclados (YYYY-MM-DD, MM-DD-YYYY, YYYY/MM/DD) y fue cargada como `object`.
-    
-    **Acción:** Se estandarizaron todas las fechas al formato `DD/MM/YYYY`. Los valores nulos, `'not_available'` o vacíos se reemplazaron con `'--/--/--'`.
-    
-    **Impacto:** 25 registros fueron imputados con `--/--/--`. La columna se convirtió a tipo `datetime` para permitir análisis temporales.
-    """)
+    Se detectaron **160 registros duplicados** por `user_id` (mismo usuario cargado más de una vez).
 
-with st.expander("📌 2. Eliminación de fechas futuras"):
-    st.markdown("""
-    Se detectaron registros con fechas de último login posteriores al 06/07/2026, lo cual es imposible en el contexto real de la plataforma.
-    
-    **Acción:** Se eliminaron los 3 registros con fechas futuras para no corromper la consistencia temporal de la base de datos.
-    
-    **Impacto:** 3 registros eliminados.
-    """)
-
-with st.expander("📌 3. Imputación de nulos en favorite_genre"):
-    st.markdown("""
-    La columna `favorite_genre` presentaba 22 valores nulos. No podemos determinar si representan un dato no registrado o una preferencia genuinamente indefinida del usuario.
-    
-    **Acción:** Se reemplazaron los nulos con la categoría explícita `'Sin género favorito'` en lugar de imputar un género ficticio o eliminar los registros.
-    
-    **Impacto:** 22 registros imputados con `'Sin género favorito'`.
-    """)
-
-with st.expander("📌 4. Filtrado de edades (age)"):
-    st.markdown("""
-    Se detectaron valores de edad iguales a 0, negativos (-5) y superiores a 120 (130, 150), todos imposibles para usuarios reales de una plataforma de streaming.
-    
-    **Acción:** Se filtraron los registros manteniendo solo edades entre 4 y 95 años. No existe criterio lógico para imputar la edad de un usuario desconocido.
-    
-    **Impacto:** 12 registros eliminados.
-    """)
-
-with st.expander("📌 5. Eliminación de valores imposibles en monthly_watch_time_mins"):
-    st.markdown("""
-    Se detectaron valores negativos (-120.0, -1.0) y valores extremadamente altos (50,000.0, 99,999.0) en el tiempo de visualización mensual.
-    
-    **Acción:** Se eliminaron los registros con valores negativos o superiores a 50,000 minutos (considerados outliers imposibles).
-    
-    **Impacto:** 15 registros eliminados.
-    """)
-
-with st.expander("📌 6. Imputación de nulos en monthly_watch_time_mins"):
-    st.markdown("""
-    La columna `monthly_watch_time_mins` presentaba 15 valores nulos.
-    
-    **Acción:** Se imputaron los nulos con la **mediana global** (523.45 minutos), ya que la mediana es robusta frente a outliers y no introduce sesgos significativos en la distribución del consumo.
-    
-    **Impacto:** 15 registros imputados con el valor mediano.
-    """)
-
-with st.expander("📌 7. Estandarización de países (country)"):
-    st.markdown("""
-    Se detectaron múltiples variantes para el mismo país: `'Brasil'`, `'Brazil'`, `'BRA'`; `'México'`, `'Mexico'`, `'MEX'`; etc.
-    
-    **Acción:** Se limpiaron espacios en blanco, se convirtió todo a minúsculas y se aplicó un mapeo para unificar todos los países bajo 7 nombres estándar: `argentina`, `brasil`, `chile`, `colombia`, `méxico`, `perú`, `uruguay`.
-    
-    **Impacto:** De 9 valores únicos (incluyendo variantes con espacios), se redujo a 7 países únicos.
-    """)
-
-with st.expander("📌 8. Estandarización de planes (subscription_plan)"):
-    st.markdown("""
-    Se detectaron múltiples variantes para el mismo plan: `'Básico'`, `'BASICO'`, `'Basic'`, `'basico'`; `'Estándar'`, `'Standard'`, `'Std'`; `'Premium'`, `'Premiun'`.
-    
-    **Acción:** Se limpiaron espacios en blanco y se aplicó un mapeo para unificar todos los planes bajo 3 nombres estándar: `'Básico'`, `'Estándar'`, `'Premium'`.
-    
-    **Impacto:** De 9 valores únicos, se redujo a 3 planes únicos.
-    """)
-
-with st.expander("📌 9. Estandarización de géneros (favorite_genre)"):
-    st.markdown("""
-    Se detectaron múltiples variantes para el mismo género: `'Drama'`, `'DRAMA'`, `'drama'`; `'Acción'`, `'ACCIÓN'`, `'Action'`, `'accion'`; `'Comedia'`, `'COMEDIA'`, `'Comedy'`.
-    
-    **Acción:** Se limpiaron espacios en blanco, se convirtió a minúsculas y se aplicó un mapeo para unificar todos los géneros bajo 8 nombres estándar: `'Acción'`, `'Comedia'`, `'Crimen'`, `'Documental'`, `'Drama'`, `'Romance'`, `'Sin género favorito'`, `'Thriller'`.
-    
-    **Impacto:** De 25 valores únicos, se redujo a 8 géneros únicos.
-    """)
-
-with st.expander("📌 10. Eliminación de duplicados"):
-    st.markdown("""
-    Se verificó la presencia de duplicados por `user_id`.
-    
     **Acción:** Se aplicó `drop_duplicates(subset=['user_id'], keep='first')` para mantener solo el primer registro de cada usuario.
-    
-    **Impacto:** No se encontraron duplicados de `user_id` en el dataset.
+
+    **Impacto:** 8.160 → 8.000 filas. 160 registros eliminados.
     """)
 
-with st.expander("📌 11. Estado final — guardado y log ETL"):
+with st.expander("📌 2. Estandarización de fechas y eliminación de fechas futuras (last_login_date)"):
+    st.markdown("""
+    La columna `last_login_date` presentaba tres formatos mezclados (YYYY-MM-DD, MM-DD-YYYY, YYYY/MM/DD) y fue cargada como `object`. Además, se detectaron registros con fecha de último login posterior al 06/07/2026, imposibles en el contexto real de la plataforma.
+
+    **Acción:** Se estandarizaron todas las fechas al formato `DD/MM/YYYY` (probando cada formato posible) y se eliminaron los registros con fecha futura. Los valores nulos o irrecuperables se marcaron como `'--/--/--'`.
+
+    **Impacto:** 8.000 → 7.601 filas. 399 registros eliminados por fecha futura o irrecuperable.
+    """)
+
+with st.expander("📌 3. Filtrado de minutos de visualización (monthly_watch_time_mins)"):
+    st.markdown("""
+    Se detectaron valores negativos (mínimo -120.0) y valores extremadamente altos (máximo 99.999.0) en el tiempo de visualización mensual, ambos imposibles.
+
+    **Acción:** Se conservaron únicamente los registros con `monthly_watch_time_mins` entre 0 y 5.000 minutos. Como los nulos no cumplen ninguna condición de rango, este filtro también descarta las filas con valores faltantes en esta columna.
+
+    **Impacto:** 7.601 → 7.342 filas. 259 registros eliminados (outliers y nulos).
+    """)
+
+with st.expander("📌 4. Imputación y estandarización de favorite_genre"):
+    st.markdown("""
+    La columna `favorite_genre` presentaba valores nulos y múltiples variantes para el mismo género: `'Drama'`, `'DRAMA'`, `'drama'`; `'Acción'`, `'ACCIÓN'`, `'Action'`, `'thriler'` (mal escrito), etc. No podemos determinar si un nulo representa un dato no registrado o una preferencia genuinamente indefinida.
+
+    **Acción:** Los nulos se reemplazaron con la categoría explícita `'Sin género favorito'` en lugar de imputar un género ficticio o eliminar el registro. Luego se aplicó un mapeo para unificar todas las variantes bajo 8 categorías estándar: `Acción`, `Comedia`, `Crimen`, `Documental`, `Drama`, `Romance`, `Sin género favorito`, `Thriller`.
+
+    **Impacto:** 227 nulos imputados. Filas sin cambios (7.342). ⚠️ *Nota de calidad:* 15 registros con el valor `'DOC'` en mayúsculas no fueron capturados por el mapeo (que compara en minúsculas) y quedaron como `'Doc'` sin estandarizar — pendiente de corrección en una futura iteración.
+    """)
+
+with st.expander("📌 5. Filtrado de edades (age)"):
+    st.markdown("""
+    Se detectaron valores de edad negativos (mínimo -5) y superiores a 120 (máximo 150), ambos imposibles para usuarios reales de una plataforma de streaming.
+
+    **Acción:** Se filtraron los registros manteniendo solo edades entre 4 y 95 años. No existe criterio lógico para imputar la edad de un usuario desconocido.
+
+    **Impacto:** 7.342 → 7.251 filas. 91 registros eliminados.
+    """)
+
+with st.expander("📌 6. Estandarización de países (country)"):
+    st.markdown("""
+    Se detectaron 24 valores únicos para 7 países reales: variantes con mayúsculas/minúsculas, códigos ISO (`ARG`, `BRA`, `CHL`...) y nombres en inglés (`Brazil`, `Mexico`).
+
+    **Acción:** Se limpiaron espacios en blanco, se convirtió todo a minúsculas y se aplicó un mapeo para unificar todos los países bajo 7 nombres estándar: `argentina`, `brasil`, `chile`, `colombia`, `méxico`, `perú`, `uruguay`.
+
+    **Impacto:** De 24 valores únicos se redujo a 7 países únicos. Filas sin cambios (7.251).
+    """)
+
+with st.expander("📌 7. Estandarización de planes (subscription_plan)"):
+    st.markdown("""
+    Se detectaron 13 valores únicos para 3 planes reales: `'Básico'`, `'BASICO'`, `'Basic'`, `'basico'`; `'Estándar'`, `'STANDARD'`, `'Std'`; `'Premium'`, `'PREMIUM'`, `'Premiun'` (mal escrito).
+
+    **Acción:** Se limpiaron espacios en blanco y se aplicó un mapeo para unificar todos los planes bajo 3 nombres estándar: `'Básico'`, `'Estándar'`, `'Premium'`.
+
+    **Impacto:** De 13 valores únicos se redujo a 3 planes únicos. Filas sin cambios (7.251).
+    """)
+
+with st.expander("📌 8. Estado final — guardado y log ETL"):
     st.markdown("""
     El dataset limpio se guarda en `data/processed/streaming_users_clean.json` preservando el original intacto en `data/raw/` para garantizar la reproducibilidad y auditoría del proceso.
-    
+
     El log ETL registra cada transformación con su impacto en filas y nulos, permitiendo comparar el estado inicial y final de manera transparente.
-    
+
     **Resultado final:**
-    - Registros: 17,985 (de 18,000 originales)
+    - Registros: 7.251 (de 8.160 originales, 88,9% de retención)
     - Nulos totales: 0
-    - Variables categóricas estandarizadas: country (7), subscription_plan (3), favorite_genre (8)
+    - Variables categóricas estandarizadas: country (7), subscription_plan (3), favorite_genre (8, con 15 registros residuales pendientes)
     - Fechas estandarizadas al formato `DD/MM/YYYY`
     """)
 
@@ -231,28 +206,26 @@ try:
 except Exception:
     log_data = {
         "Paso": [
-            "01", "02", "03", "04", "05", "06", "07", "08", "09", "10"
+            "01", "02", "03", "04", "05", "06", "07", "08"
         ],
         "Descripción": [
             "Dataset original cargado",
-            "Estandarización de fechas (DD/MM/YYYY) con --/--/-- para nulos",
-            "Eliminación de fechas futuras (> 06/07/2026)",
-            "Imputación de nulos en favorite_genre con 'Sin género favorito'",
+            "Eliminación de duplicados por user_id (keep=first)",
+            "Estandarización y limpieza de fechas",
+            "Filtrado de minutos de visualización (0-5.000 min)",
+            "Reemplazo de nulos y estandarización de favorite_genre",
             "Filtrado de edades (4-95 años)",
-            "Eliminación de valores imposibles en monthly_watch_time_mins",
-            "Imputación de nulos en monthly_watch_time_mins (mediana)",
-            "Estandarización de países (7 países únicos)",
-            "Estandarización de planes (Básico/Estándar/Premium)",
-            "Estandarización de géneros (8 géneros únicos)"
+            "Estandarización de países",
+            "Estandarización de subscription_plan"
         ],
         "Filas": [
-            18000, 18000, 17997, 17997, 17985, 17985, 17985, 17985, 17985, 17985
+            8160, 8000, 7601, 7342, 7342, 7251, 7251, 7251
         ],
         "Nulos": [
-            62, 37, 37, 15, 15, 15, 0, 0, 0, 0
+            753, 753, 418, 227, 0, 0, 0, 0
         ],
         "Retención (%)": [
-            100.0, 100.0, 99.98, 99.98, 99.92, 99.92, 99.92, 99.92, 99.92, 99.92
+            100.0, 98.04, 93.15, 89.97, 89.97, 88.86, 88.86, 88.86
         ]
     }
     st.dataframe(pd.DataFrame(log_data), use_container_width=True, hide_index=True)
