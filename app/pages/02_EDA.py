@@ -218,11 +218,12 @@ with col_t4:
     st.dataframe(tabla_edad_consumo, use_container_width=True)
 
 st.markdown("""
-**Interpretación:** La correlación de Pearson entre edad y minutos visualizados es positiva y moderada (0.30).
-Se observa una tendencia clara: los usuarios de mayor edad consumen más contenido.
-El pico de consumo se alcanza en el rango de 46-60 años, donde los usuarios superan
-los 1000 minutos mensuales en promedio. Esto sugiere que los adultos mayores
-son los consumidores más activos de la plataforma.
+**Interpretación:** La correlación de Pearson entre edad y minutos visualizados es de **0.006**,
+prácticamente nula. El promedio de minutos visualizados se mantiene estable en todos los rangos
+etarios (entre 776 y 809 minutos mensuales), sin una tendencia de crecimiento o caída asociada
+a la edad. La hipótesis de que los usuarios de mayor edad consumen más contenido **no encuentra
+respaldo en los datos**: la edad y el consumo mensual son, en la práctica, variables independientes
+entre sí.
 """)
 st.markdown("---")
 
@@ -264,20 +265,28 @@ for pais in genero_pais.index:
         st.markdown(f"  - {genero}: {count} usuarios ({pct:.1f}%)")
 
 st.markdown("""
-**Interpretación:** Las preferencias de género varían significativamente según el país,
-reflejando diferencias culturales en los gustos audiovisuales.
+**Interpretación:** La distribución de `favorite_genre` es, en términos generales, bastante pareja
+tanto a nivel global como dentro de cada país: los ocho géneros representan entre 13% y 17% de las
+preferencias en cada mercado, y la diferencia entre el género más elegido y el segundo dentro de un
+mismo país es de apenas 1 a 2 puntos porcentuales (ver tabla de arriba). Esto significa que, si bien
+existe un género "líder" por país, no hay una preferencia dominante o marcadamente diferenciada como
+para hablar de patrones culturales fuertes: la variación observada es moderada y podría deberse en
+parte a variabilidad muestral.
 
-- **Argentina** muestra preferencia por Drama y Thriller.
-- **Brasil** se inclina por Romance y Comedia.
-- **México** prefiere Comedia y Acción.
-- **Chile y Perú** comparten patrones similares, con Drama y Comedia predominantes.
-- **Colombia** presenta una distribución más equilibrada entre géneros.
-- **Uruguay** muestra inclinación hacia Documentales y Comedia.
+Con esa salvedad, los géneros más elegidos por país son:
+- **Argentina:** Drama y Comedia
+- **Brasil:** Comedia y Thriller
+- **Chile:** Crimen y Acción
+- **Colombia:** Comedia y Thriller
+- **México:** Acción y Comedia
+- **Perú:** Romance y Drama
+- **Uruguay:** Drama y Romance
 
-Estas diferencias subrayan la importancia de adaptar el catálogo de contenido
-a las preferencias locales para maximizar el engagement y la satisfacción
-del usuario en cada mercado.
+Antes de usar estas diferencias para decisiones de catálogo por mercado, sería conveniente
+confirmar que son estadísticamente significativas (por ejemplo con un test de chi-cuadrado)
+y no solo variación esperable dado el tamaño de cada muestra.
 """)
+st.markdown("---")
 
 st.markdown("---")
 st.caption(f"EDA · 5 visualizaciones · {df.shape[0]:,} registros procesados")
